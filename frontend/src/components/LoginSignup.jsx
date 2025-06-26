@@ -6,17 +6,22 @@ import Button from '@mui/material/Button';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Link from '@mui/material/Link';
 import axios from 'axios';
+import TermsAndConditions from './TermsAndConditions';
 
 const LoginSignup = ({ onLogin }) => {
     const navigate = useNavigate();
     const [tabValue, setTabValue] = useState(0);
     const [loginForm, setLoginForm] = useState({ email: '', password: '' });
     const [signupForm, setSignupForm] = useState({
-        name: '', email: '', contactNumber: '', password: '', confirmPassword: ''
+        name: '', email: '', contactNumber: '', password: '', confirmPassword: '', termsAccepted: false
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [termsDialogOpen, setTermsDialogOpen] = useState(false); // NEW: Terms dialog state
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
@@ -29,7 +34,11 @@ const LoginSignup = ({ onLogin }) => {
     };
 
     const handleSignupChange = (e) => {
-        setSignupForm({ ...signupForm, [e.target.name]: e.target.value });
+        if (e.target.name === 'termsAccepted') {
+            setSignupForm({ ...signupForm, [e.target.name]: e.target.checked });
+        } else {
+            setSignupForm({ ...signupForm, [e.target.name]: e.target.value });
+        }
         setError(''); // Clear error when user types
     };
 
@@ -75,6 +84,12 @@ const LoginSignup = ({ onLogin }) => {
             return;
         }
 
+        // NEW: Check if terms are accepted
+        if (!signupForm.termsAccepted) {
+            setError('You must accept the Terms and Conditions to register');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
@@ -84,7 +99,7 @@ const LoginSignup = ({ onLogin }) => {
             setTabValue(0);
             // Clear signup form
             setSignupForm({
-                name: '', email: '', contactNumber: '', password: '', confirmPassword: ''
+                name: '', email: '', contactNumber: '', password: '', confirmPassword: '', termsAccepted: false
             });
         } catch (error) {
             console.error('Signup failed:', error);
@@ -92,6 +107,18 @@ const LoginSignup = ({ onLogin }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // NEW: Handle terms dialog open
+    const handleTermsLinkClick = (e) => {
+        e.preventDefault();
+        setTermsDialogOpen(true);
+    };
+
+    // NEW: Handle terms acceptance from dialog
+    const handleTermsAccept = () => {
+        setSignupForm({ ...signupForm, termsAccepted: true });
+        setTermsDialogOpen(false);
     };
 
     return (
@@ -191,6 +218,32 @@ const LoginSignup = ({ onLogin }) => {
                         margin="normal"
                         required
                     />
+                    
+                    {/* NEW: Terms and Conditions Checkbox */}
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                name="termsAccepted"
+                                checked={signupForm.termsAccepted}
+                                onChange={handleSignupChange}
+                                color="primary"
+                            />
+                        }
+                        label={
+                            <span>
+                                I agree to the{' '}
+                                <Link 
+                                    href="#" 
+                                    onClick={handleTermsLinkClick}
+                                    sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+                                >
+                                    Terms and Conditions
+                                </Link>
+                            </span>
+                        }
+                        sx={{ mt: 2, mb: 2, textAlign: 'left' }}
+                    />
+                    
                     <Button 
                         variant="contained" 
                         onClick={handleSignup} 
@@ -202,6 +255,13 @@ const LoginSignup = ({ onLogin }) => {
                     </Button>
                 </Box>
             )}
+
+            {/* NEW: Terms and Conditions Dialog */}
+            <TermsAndConditions
+                open={termsDialogOpen}
+                onClose={() => setTermsDialogOpen(false)}
+                onAccept={handleTermsAccept}
+            />
         </Box>
     );
 };

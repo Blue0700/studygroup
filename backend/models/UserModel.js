@@ -6,6 +6,7 @@ const userSchema = mongoose.Schema({
     password: String,
     role: { type: String, default: 'user' }, // 'user' or 'admin'
     isBlocked: { type: Boolean, default: false },
+    termsAccepted: { type: Boolean, required: true, default: false }, // NEW: Terms acceptance field
     joinedGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }],
     createdAt: { type: Date, default: Date.now }
 });

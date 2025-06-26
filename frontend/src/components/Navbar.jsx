@@ -28,11 +28,28 @@ const Navbar = ({ user, onLogout }) => {
         navigate('/');
     };
 
+    // NEW: Handle logo/title click to navigate to home
+    const handleLogoClick = () => {
+        navigate('/');
+    };
+
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar position="static">
                 <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    {/* UPDATED: Made logo/title clickable */}
+                    <Typography 
+                        variant="h6" 
+                        component="div" 
+                        sx={{ 
+                            flexGrow: 1, 
+                            cursor: 'pointer',
+                            '&:hover': {
+                                opacity: 0.8
+                            }
+                        }}
+                        onClick={handleLogoClick}
+                    >
                         📚 Study Group Finder
                     </Typography>
                     

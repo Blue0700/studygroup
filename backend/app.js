@@ -29,17 +29,24 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// **NEW: User Registration**
+// **UPDATED: User Registration with Terms Validation**
 app.post('/register', async(req, res) => {
     try {
-        const { name, email, contactNumber, password } = req.body;
+        const { name, email, contactNumber, password, termsAccepted } = req.body;
+        
+        // Validate terms acceptance
+        if (!termsAccepted) {
+            return res.status(400).json({ message: 'You must accept the terms and conditions to register' });
+        }
+        
         const hashedPassword = await bcrypt.hash(password, 10);
         
         const user = new UserModel({
             name,
             email,
             contactNumber,
-            password: hashedPassword
+            password: hashedPassword,
+            termsAccepted: true
         });
         
         await user.save();
