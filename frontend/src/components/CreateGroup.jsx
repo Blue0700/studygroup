@@ -23,10 +23,10 @@ const CreateGroup = () => {
     const handleSubmit = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:3000/groups/create', form, {
+            const response = await axios.post('http://localhost:3000/groups/create', form, {
                 headers: { authorization: token }
             });
-            alert('Group created successfully! Waiting for admin approval.');
+            alert(response.data.message); // **UPDATED: Show backend message which now includes membership info**
             navigate('/');
         } catch (error) {
             console.error('Error creating group:', error);

@@ -113,15 +113,24 @@ app.post('/groups/:id/join', verifyToken, async(req, res) => {
     }
 });
 
-// Create group (similar to your blog's POST /add)
+// **UPDATED: Create group with auto-membership for creator**
 app.post('/groups/create', verifyToken, async(req, res) => {
     try {
         const group = new GroupModel({
             ...req.body,
-            creator: req.user.userId
+            creator: req.user.userId,
+            members: [req.user.userId] // **NEW: Auto-add creator as member**
         });
+        
         await group.save();
-        res.json({ message: 'Group created and pending approval' });
+        
+        // **NEW: Add group to creator's joinedGroups**
+        await UserModel.findByIdAndUpdate(
+            req.user.userId,
+            { $push: { joinedGroups: group._id } }
+        );
+        
+        res.json({ message: 'Group created and pending approval. You have been added as a member.' });
     } catch(error) {
         res.status(500).json({ error });
     }
