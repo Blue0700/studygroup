@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -10,17 +10,9 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { Link, useNavigate } from 'react-router-dom';
 
-const Navbar = () => {
-    const [user, setUser] = useState(null);
+const Navbar = ({ user, onLogout }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
 
     const handleMenu = (event) => {
         setAnchorEl(event.currentTarget);
@@ -31,9 +23,7 @@ const Navbar = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
+        onLogout();
         handleClose();
         navigate('/');
     };

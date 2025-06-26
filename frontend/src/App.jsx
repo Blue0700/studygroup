@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -10,12 +10,31 @@ import CreateGroup from './components/CreateGroup';
 import AdminDashboard from './components/AdminDashboard';
 
 const App = () => {
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
+
+    const handleLogin = (userData) => {
+        setUser(userData);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+    };
+
     return (
         <div>
-            <Navbar />
+            <Navbar user={user} onLogout={handleLogout} />
             <Routes>
                 <Route path='/' element={<Home />} />
-                <Route path='/login' element={<LoginSignup />} />
+                <Route path='/login' element={<LoginSignup onLogin={handleLogin} />} />
                 <Route path='/group/:id' element={<GroupDetails />} />
                 <Route path='/profile' element={<UserProfile />} />
                 <Route path='/create-group' element={<CreateGroup />} />
