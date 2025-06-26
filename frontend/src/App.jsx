@@ -7,6 +7,7 @@ import LoginSignup from './components/LoginSignup';
 import GroupDetails from './components/GroupDetails';
 import UserProfile from './components/UserProfile';
 import CreateGroup from './components/CreateGroup';
+import EditGroup from './components/EditGroup';
 import AdminDashboard from './components/AdminDashboard';
 
 const App = () => {
@@ -38,6 +39,7 @@ const App = () => {
                 <Route path='/group/:id' element={<GroupDetails />} />
                 <Route path='/profile' element={<UserProfile />} />
                 <Route path='/create-group' element={<CreateGroup />} />
+                <Route path='/edit-group/:id' element={<EditGroup />} />
                 <Route path='/admin' element={<AdminDashboard />} />
             </Routes>
         </div>
