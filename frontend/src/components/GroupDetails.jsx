@@ -11,6 +11,11 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContentText from '@mui/material/DialogContentText';
 import axios from 'axios';
 
 const GroupDetails = () => {
@@ -22,6 +27,7 @@ const GroupDetails = () => {
     const [file, setFile] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
     const [isUserInGroup, setIsUserInGroup] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     useEffect(() => {
         fetchGroupDetails();
@@ -109,6 +115,36 @@ const GroupDetails = () => {
         }
     };
 
+    const handleEditGroup = () => {
+        navigate(`/edit-group/${id}`);
+    };
+
+    const handleDeleteGroup = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please login to delete groups');
+                navigate('/login');
+                return;
+            }
+
+            await axios.delete(`http://localhost:3000/groups/${id}`, {
+                headers: { authorization: token }
+            });
+            
+            alert('Group deleted successfully!');
+            navigate('/');
+        } catch (error) {
+            console.error('Failed to delete group:', error);
+            if (error.response?.status === 403) {
+                alert('You are not authorized to delete this group');
+            } else {
+                alert('Failed to delete group. Please try again.');
+            }
+        }
+        setDeleteDialogOpen(false);
+    };
+
     const sendMessage = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -143,6 +179,10 @@ const GroupDetails = () => {
         return localStorage.getItem('token') !== null;
     };
 
+    const isGroupCreator = () => {
+        return currentUserId && group && group.creator && group.creator._id === currentUserId;
+    };
+
     if (!group) return <div>Loading...</div>;
 
     return (
@@ -165,27 +205,50 @@ const GroupDetails = () => {
                         Members: {group.members?.length || 0}
                     </Typography>
                     
-                    {/* Join/Leave Group Button */}
-                    {isUserLoggedIn() && (
-                        <Box sx={{ mt: 2 }}>
-                            {isUserInGroup ? (
-                                <Button 
-                                    variant="outlined" 
-                                    color="secondary"
-                                    onClick={leaveGroup}
-                                >
-                                    Leave Group
-                                </Button>
-                            ) : (
+                    {/* Action Buttons */}
+                    <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        {/* Join/Leave Group Button */}
+                        {isUserLoggedIn() && !isGroupCreator() && (
+                            <>
+                                {isUserInGroup ? (
+                                    <Button 
+                                        variant="outlined" 
+                                        color="secondary"
+                                        onClick={leaveGroup}
+                                    >
+                                        Leave Group
+                                    </Button>
+                                ) : (
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={joinGroup}
+                                    >
+                                        Join Group
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                        
+                        {/* Edit/Delete Buttons - Only for Group Creator */}
+                        {isGroupCreator() && (
+                            <>
                                 <Button 
                                     variant="contained" 
-                                    onClick={joinGroup}
+                                    color="primary"
+                                    onClick={handleEditGroup}
                                 >
-                                    Join Group
+                                    Edit Group
                                 </Button>
-                            )}
-                        </Box>
-                    )}
+                                <Button 
+                                    variant="outlined" 
+                                    color="error"
+                                    onClick={() => setDeleteDialogOpen(true)}
+                                >
+                                    Delete Group
+                                </Button>
+                            </>
+                        )}
+                    </Box>
                 </CardContent>
             </Card>
 
@@ -261,6 +324,28 @@ const GroupDetails = () => {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+            >
+                <DialogTitle>Delete Group</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to delete this group? This action cannot be undone.
+                        All messages and materials will be permanently deleted.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleDeleteGroup} color="error">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };
