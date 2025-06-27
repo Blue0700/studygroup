@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config(); // Load environment variables
 const app = new express();
 const PORT = 3000;
 
@@ -12,6 +13,9 @@ require('./connection');
 const UserModel = require('./models/UserModel');
 const GroupModel = require('./models/GroupModel');
 const MessageModel = require('./models/MessageModel');
+
+// **NEW: Import notification routes**
+const notificationRoutes = require('./routes/notificationRoutes');
 
 app.use(express.json());
 app.use(cors());
@@ -65,6 +69,9 @@ const verifyGroupOwnership = async (req, res, next) => {
         res.status(500).json({ message: 'Error verifying group ownership', error });
     }
 };
+
+// **NEW: Use notification routes**
+app.use('/notifications', verifyToken, notificationRoutes);
 
 // **User Registration with Terms Validation**
 app.post('/register', async(req, res) => {
