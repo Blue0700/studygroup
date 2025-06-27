@@ -9,6 +9,7 @@ import UserProfile from './components/UserProfile';
 import CreateGroup from './components/CreateGroup';
 import EditGroup from './components/EditGroup';
 import AdminDashboard from './components/AdminDashboard';
+import SendNotification from './components/SendNotification'; // **NEW: Import notification component**
 
 const App = () => {
     const [user, setUser] = useState(null);
@@ -41,6 +42,8 @@ const App = () => {
                 <Route path='/create-group' element={<CreateGroup />} />
                 <Route path='/edit-group/:id' element={<EditGroup />} />
                 <Route path='/admin' element={<AdminDashboard />} />
+                {/* **NEW: Add notification route** */}
+                <Route path='/send-notification/:groupId' element={<SendNotification />} />
             </Routes>
         </div>
     );

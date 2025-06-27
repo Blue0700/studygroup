@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -14,12 +15,14 @@ import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import EmailIcon from '@mui/icons-material/Email';
 import axios from 'axios';
 
 const AdminDashboard = () => {
     const [tabValue, setTabValue] = useState(0);
     const [groups, setGroups] = useState([]);
     const [users, setUsers] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchGroups();
@@ -90,6 +93,11 @@ const AdminDashboard = () => {
         }
     };
 
+    // **NEW: Navigate to notification page**
+    const handleSendNotification = (groupId) => {
+        navigate(`/send-notification/${groupId}`);
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'approved': return 'success';
@@ -158,10 +166,23 @@ const AdminDashboard = () => {
                                                             size="small" 
                                                             color="error"
                                                             onClick={() => rejectGroup(group._id)}
+                                                            sx={{ mr: 1 }}
                                                         >
                                                             Reject
                                                         </Button>
                                                     </>
+                                                )}
+                                                {/* **NEW: Send Notification button for approved groups** */}
+                                                {group.status === 'approved' && (
+                                                    <Button 
+                                                        size="small" 
+                                                        variant="outlined"
+                                                        startIcon={<EmailIcon />}
+                                                        onClick={() => handleSendNotification(group._id)}
+                                                        sx={{ ml: 1 }}
+                                                    >
+                                                        Notify
+                                                    </Button>
                                                 )}
                                             </TableCell>
                                         </TableRow>
