@@ -1,14 +1,12 @@
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const app = new express();
-const PORT = 3000;
+const app = express();
 
+// Import database connection
 require('./connection');
+
+// Import models
 const UserModel = require('./models/UserModel');
 const GroupModel = require('./models/GroupModel');
 const MessageModel = require('./models/MessageModel');
@@ -16,31 +14,19 @@ const MessageModel = require('./models/MessageModel');
 // **NEW: Import file routes**
 const fileRoutes = require('./routes/fileRoutes');
 
-app.use(express.json());
+// Middleware
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// **Static file serving for uploaded materials**
-app.use('/uploads', express.static('uploads'));
+// **NEW: Serve static files from uploads directory**
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// **NEW: Use file routes**
+// **NEW: File upload routes**
 app.use('/api', fileRoutes);
 
-// **Multer configuration for message files (existing)**
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/messages/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-const upload = multer({ storage });
-
-// **Authentication Middleware**
+// Authentication middleware
+const jwt = require('jsonwebtoken');
 const verifyToken = (req, res, next) => {
     const token = req.headers.authorization;
     if (!token) {
@@ -55,343 +41,390 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// **Middleware to verify group ownership**
-const verifyGroupOwnership = async (req, res, next) => {
+// **User Registration**
+app.post('/register', async (req, res) => {
     try {
-        const group = await GroupModel.findById(req.params.id);
-        if (!group) {
-            return res.status(404).json({ message: 'Group not found' });
+        const { name, email, contactNumber, password } = req.body;
+        
+        // Check if user already exists
+        const existingUser = await UserModel.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
         }
-        if (group.creator.toString() !== req.user.userId) {
-            return res.status(403).json({ message: 'Only group creator can perform this action' });
-        }
-        req.group = group;
-        next();
-    } catch (error) {
-        res.status(500).json({ message: 'Error verifying group ownership', error });
-    }
-};
 
-// **User Registration with Terms Validation**
-app.post('/register', async(req, res) => {
-    try {
-        const { name, email, contactNumber, password, termsAccepted } = req.body;
-        
-        if (!termsAccepted) {
-            return res.status(400).json({ message: 'You must accept the terms and conditions to register' });
-        }
-        
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        const user = new UserModel({
+        const newUser = new UserModel({
             name,
             email,
             contactNumber,
-            password: hashedPassword,
-            termsAccepted: true
+            password
         });
-        
-        await user.save();
-        res.json({ message: 'User registered successfully' });
-    } catch(error) {
-        res.status(400).json({ message: 'Registration failed', error });
+
+        await newUser.save();
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Registration failed', error: error.message });
     }
 });
 
 // **User Login**
-app.post('/login', async(req, res) => {
+app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await UserModel.findOne({ email });
         
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        // Check for admin credentials
+        if (email === 'admin@studygroup.com' && password === 'admin123') {
+            const token = jwt.sign(
+                { userId: 'admin', email: 'admin@studygroup.com', role: 'admin' },
+                'your-secret-key'
+            );
+            return res.json({
+                token,
+                user: { id: 'admin', name: 'Admin', email: 'admin@studygroup.com', role: 'admin' }
+            });
+        }
+
+        const user = await UserModel.findOne({ email, password });
+        if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        
-        if (user.isBlocked) {
-            return res.status(403).json({ message: 'Account blocked' });
-        }
-        
+
         const token = jwt.sign(
-            { userId: user._id, role: user.role }, 
+            { userId: user._id, email: user.email, role: 'user' },
             'your-secret-key'
         );
-        
-        res.json({ token, user: { name: user.name, role: user.role } });
-    } catch(error) {
-        res.status(500).json({ message: 'Login failed', error });
+
+        res.json({
+            token,
+            user: { id: user._id, name: user.name, email: user.email, role: 'user' }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Login failed', error: error.message });
     }
 });
 
-// Get all approved groups
-app.get('/groups', async(req, res) => {
+// **Get User Profile**
+app.get('/profile', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role === 'admin') {
+            return res.json({
+                _id: 'admin',
+                name: 'Admin',
+                email: 'admin@studygroup.com',
+                role: 'admin'
+            });
+        }
+
+        const user = await UserModel.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch profile', error: error.message });
+    }
+});
+
+// **Update User Profile**
+app.put('/profile', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role === 'admin') {
+            return res.status(403).json({ message: 'Admin profile cannot be updated' });
+        }
+
+        const { name, email, contactNumber } = req.body;
+        const user = await UserModel.findByIdAndUpdate(
+            req.user.userId,
+            { name, email, contactNumber },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update profile', error: error.message });
+    }
+});
+
+// **Create Group**
+app.post('/groups', verifyToken, async (req, res) => {
+    try {
+        const { title, subject, description } = req.body;
+        
+        const newGroup = new GroupModel({
+            title,
+            subject,
+            description,
+            creator: req.user.userId,
+            members: [req.user.userId]
+        });
+
+        await newGroup.save();
+        res.status(201).json({ message: 'Group created successfully', group: newGroup });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to create group', error: error.message });
+    }
+});
+
+// **Get All Groups**
+app.get('/groups', async (req, res) => {
     try {
         const groups = await GroupModel.find({ status: 'approved' })
             .populate('creator', 'name')
             .populate('members', 'name');
         res.json(groups);
-    } catch(error) {
-        res.status(500).json({ error });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch groups', error: error.message });
+    }
+});
+
+// **Get Single Group**
+app.get('/groups/:id', async (req, res) => {
+    try {
+        const group = await GroupModel.findById(req.params.id)
+            .populate('creator', 'name')
+            .populate('members', 'name');
+        
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+
+        res.json(group);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch group', error: error.message });
+    }
+});
+
+// **Update Group**
+app.put('/groups/:id', verifyToken, async (req, res) => {
+    try {
+        const { title, subject, description } = req.body;
+        
+        const group = await GroupModel.findById(req.params.id);
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+
+        // Check if user is the creator or admin
+        if (group.creator.toString() !== req.user.userId && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized to update this group' });
+        }
+
+        const updatedGroup = await GroupModel.findByIdAndUpdate(
+            req.params.id,
+            { title, subject, description },
+            { new: true }
+        ).populate('creator', 'name').populate('members', 'name');
+
+        res.json(updatedGroup);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update group', error: error.message });
+    }
+});
+
+// **Delete Group**
+app.delete('/groups/:id', verifyToken, async (req, res) => {
+    try {
+        const group = await GroupModel.findById(req.params.id);
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+
+        // Check if user is the creator or admin
+        if (group.creator.toString() !== req.user.userId && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized to delete this group' });
+        }
+
+        await GroupModel.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Group deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete group', error: error.message });
     }
 });
 
 // **Join Group**
-app.post('/groups/:id/join', verifyToken, async(req, res) => {
+app.post('/groups/:id/join', verifyToken, async (req, res) => {
     try {
         const group = await GroupModel.findById(req.params.id);
-        const user = await UserModel.findById(req.user.userId);
-        
-        if (!group.members.includes(req.user.userId)) {
-            group.members.push(req.user.userId);
-            user.joinedGroups.push(group._id);
-            
-            await group.save();
-            await user.save();
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
         }
-        
-        res.json({ message: 'Joined group successfully' });
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
 
-// **Create group with auto-membership for creator**
-app.post('/groups/create', verifyToken, async(req, res) => {
-    try {
-        const group = new GroupModel({
-            ...req.body,
-            creator: req.user.userId,
-            members: [req.user.userId]
-        });
-        
+        if (group.members.includes(req.user.userId)) {
+            return res.status(400).json({ message: 'Already a member of this group' });
+        }
+
+        group.members.push(req.user.userId);
         await group.save();
-        
-        await UserModel.findByIdAndUpdate(
-            req.user.userId,
-            { $push: { joinedGroups: group._id } }
-        );
-        
-        res.json({ message: 'Group created and pending approval. You have been added as a member.' });
-    } catch(error) {
-        res.status(500).json({ error });
+
+        res.json({ message: 'Joined group successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to join group', error: error.message });
     }
 });
 
-// **Update group (only by creator)**
-app.put('/groups/:id', verifyToken, verifyGroupOwnership, async(req, res) => {
-    try {
-        const { title, subject, description } = req.body;
-        
-        await GroupModel.findByIdAndUpdate(req.params.id, {
-            title,
-            subject,
-            description
-        });
-        
-        res.json({ message: 'Group updated successfully' });
-    } catch(error) {
-        res.status(500).json({ message: 'Error updating group', error });
-    }
-});
-
-// **Delete group (only by creator) - UPDATED to handle files**
-app.delete('/groups/:id', verifyToken, verifyGroupOwnership, async(req, res) => {
+// **Leave Group**
+app.post('/groups/:id/leave', verifyToken, async (req, res) => {
     try {
         const group = await GroupModel.findById(req.params.id);
-        
-        // **NEW: Delete all group files from filesystem**
-        if (group.files && group.files.length > 0) {
-            group.files.forEach(file => {
-                const filePath = path.join(__dirname, 'uploads/groups', file.fileName);
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
-                }
-            });
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
         }
+
+        if (!group.members.includes(req.user.userId)) {
+            return res.status(400).json({ message: 'Not a member of this group' });
+        }
+
+        group.members = group.members.filter(member => member.toString() !== req.user.userId);
+        await group.save();
+
+        res.json({ message: 'Left group successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to leave group', error: error.message });
+    }
+});
+
+// **Send Message**
+app.post('/groups/:id/messages', verifyToken, async (req, res) => {
+    try {
+        const { message } = req.body;
         
-        // Remove group from all members' joinedGroups
-        await UserModel.updateMany(
-            { joinedGroups: req.params.id },
-            { $pull: { joinedGroups: req.params.id } }
-        );
-        
-        // Delete all messages related to this group
-        await MessageModel.deleteMany({ groupId: req.params.id });
-        
-        // Delete the group
-        await GroupModel.findByIdAndDelete(req.params.id);
-        
-        res.json({ message: 'Group deleted successfully' });
-    } catch(error) {
-        res.status(500).json({ message: 'Error deleting group', error });
+        const group = await GroupModel.findById(req.params.id);
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+
+        if (!group.members.includes(req.user.userId)) {
+            return res.status(403).json({ message: 'Must be a member to send messages' });
+        }
+
+        const newMessage = new MessageModel({
+            message,
+            sender: req.user.userId,
+            group: req.params.id
+        });
+
+        await newMessage.save();
+        res.status(201).json({ message: 'Message sent successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to send message', error: error.message });
+    }
+});
+
+// **Get Messages**
+app.get('/groups/:id/messages', async (req, res) => {
+    try {
+        const messages = await MessageModel.find({ group: req.params.id })
+            .populate('sender', 'name')
+            .sort({ createdAt: 1 });
+        res.json(messages);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
     }
 });
 
 // **Admin Routes**
-app.get('/admin/groups', verifyToken, async(req, res) => {
+app.get('/admin/groups', verifyToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Admin access required' });
         }
-        
+
         const groups = await GroupModel.find()
             .populate('creator', 'name')
             .populate('members', 'name');
         res.json(groups);
-    } catch(error) {
-        res.status(500).json({ error });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch groups', error: error.message });
     }
 });
 
-app.put('/admin/groups/:id/approve', verifyToken, async(req, res) => {
+app.put('/admin/groups/:id/approve', verifyToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Admin access required' });
         }
-        
-        await GroupModel.findByIdAndUpdate(req.params.id, { status: 'approved' });
-        res.json({ message: 'Group approved' });
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
 
-// Get single group details
-app.get('/groups/:id', async(req, res) => {
-    try {
-        const group = await GroupModel.findById(req.params.id)
-            .populate('creator', 'name')
-            .populate('members', 'name')
-            .populate('files.uploadedBy', 'name'); // **NEW: Populate file uploader info**
-        res.json(group);
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
+        const group = await GroupModel.findByIdAndUpdate(
+            req.params.id,
+            { status: 'approved' },
+            { new: true }
+        );
 
-// Get group messages
-app.get('/groups/:id/messages', async(req, res) => {
-    try {
-        const messages = await MessageModel.find({ groupId: req.params.id })
-            .populate('sender', 'name')
-            .sort({ createdAt: 1 });
-        res.json(messages);
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
-
-// Send message to group
-app.post('/groups/:id/messages', verifyToken, upload.single('file'), async(req, res) => {
-    try {
-        const message = new MessageModel({
-            groupId: req.params.id,
-            sender: req.user.userId,
-            message: req.body.message,
-            fileUrl: req.file ? `/uploads/messages/${req.file.filename}` : null
-        });
-        await message.save();
-        res.json({ message: 'Message sent successfully' });
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
-
-// Get user profile
-app.get('/profile', verifyToken, async(req, res) => {
-    try {
-        const user = await UserModel.findById(req.user.userId).select('-password');
-        res.json(user);
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
-
-// Update user profile
-app.put('/profile', verifyToken, async(req, res) => {
-    try {
-        await UserModel.findByIdAndUpdate(req.user.userId, req.body);
-        res.json({ message: 'Profile updated successfully' });
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
-
-// Get user's groups
-app.get('/my-groups', verifyToken, async(req, res) => {
-    try {
-        const user = await UserModel.findById(req.user.userId).populate('joinedGroups');
-        res.json(user.joinedGroups);
-    } catch(error) {
-        res.status(500).json({ error });
-    }
-});
-
-// Leave group
-app.post('/groups/:id/leave', verifyToken, async(req, res) => {
-    try {
-        const group = await GroupModel.findById(req.params.id);
-        const user = await UserModel.findById(req.user.userId);
-        
-        // Check if user is the creator
-        if (group.creator.toString() === req.user.userId) {
-            return res.status(400).json({ message: 'Group creators cannot leave their own group. Delete the group instead.' });
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
         }
-        
-        group.members = group.members.filter(member => !member.equals(req.user.userId));
-        user.joinedGroups = user.joinedGroups.filter(groupId => !groupId.equals(req.params.id));
-        
-        await group.save();
-        await user.save();
-        
-        res.json({ message: 'Left group successfully' });
-    } catch(error) {
-        res.status(500).json({ error });
+
+        res.json({ message: 'Group approved successfully', group });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to approve group', error: error.message });
     }
 });
 
-// Admin: Get all users
-app.get('/admin/users', verifyToken, async(req, res) => {
+app.put('/admin/groups/:id/reject', verifyToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Admin access required' });
         }
-        
-        const users = await UserModel.find({ role: 'user' }).select('-password');
+
+        const group = await GroupModel.findByIdAndUpdate(
+            req.params.id,
+            { status: 'rejected' },
+            { new: true }
+        );
+
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+
+        res.json({ message: 'Group rejected successfully', group });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to reject group', error: error.message });
+    }
+});
+
+// **Get All Users (Admin)**
+app.get('/admin/users', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        const users = await UserModel.find();
         res.json(users);
-    } catch(error) {
-        res.status(500).json({ error });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch users', error: error.message });
     }
 });
 
-// Admin: Block/Unblock user
-app.put('/admin/users/:id/block', verifyToken, async(req, res) => {
+// **Delete User (Admin)**
+app.delete('/admin/users/:id', verifyToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Admin access required' });
         }
-        
-        await UserModel.findByIdAndUpdate(req.params.id, { isBlocked: req.body.isBlocked });
-        res.json({ message: 'User status updated' });
-    } catch(error) {
-        res.status(500).json({ error });
+
+        await UserModel.findByIdAndDelete(req.params.id);
+        res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete user', error: error.message });
     }
 });
 
-// Admin: Reject group
-app.put('/admin/groups/:id/reject', verifyToken, async(req, res) => {
-    try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Admin access required' });
+// **Error handling middleware**
+app.use((error, req, res, next) => {
+    if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: 'File too large' });
         }
-        
-        await GroupModel.findByIdAndUpdate(req.params.id, { status: 'rejected' });
-        res.json({ message: 'Group rejected' });
-    } catch(error) {
-        res.status(500).json({ error });
     }
+    res.status(500).json({ message: 'Something went wrong!' });
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("Server listening on port 3000");
+    console.log(`Server running on port ${PORT}`);
 });
