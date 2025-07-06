@@ -1,312 +1,7 @@
-h1{
-  color: green;
-  background-color: yellow;
-  text-align: center;
-  padding: 40px;
-}
+/* **NEW: Modern Navbar Styles */
+/* Add these styles to your existing App.css after the existing styles */
 
-/* **NEW: File Upload Component Styles */
-.file-upload-container {
-  margin-bottom: 20px;
-}
-
-.file-upload-dropzone {
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: #fafafa;
-}
-
-.file-upload-dropzone:hover {
-  border-color: #1976d2;
-  background-color: #f5f5f5;
-}
-
-.file-upload-dropzone.drag-active {
-  border-color: #1976d2;
-  background-color: #e3f2fd;
-}
-
-.file-upload-progress {
-  margin-top: 10px;
-}
-
-.file-upload-message {
-  margin-top: 10px;
-}
-
-/* **NEW: File List Component Styles */
-.file-list-container {
-  margin-bottom: 20px;
-}
-
-.file-list-item {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.file-list-item:last-child {
-  border-bottom: none;
-}
-
-.file-list-icon {
-  margin-right: 10px;
-  color: #666;
-}
-
-.file-list-info {
-  flex: 1;
-}
-
-.file-list-name {
-  font-weight: 500;
-  color: #333;
-}
-
-.file-list-details {
-  font-size: 0.85em;
-  color: #666;
-  margin-top: 4px;
-}
-
-.file-list-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.file-list-actions button {
-  min-width: 36px;
-  height: 36px;
-  padding: 6px;
-}
-
-.file-size-chip {
-  background-color: #f0f0f0;
-  color: #666;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75em;
-  margin-right: 8px;
-}
-
-.file-meta-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.file-meta-info span {
-  font-size: 0.75em;
-  color: #888;
-}
-
-/* **NEW: Tab Styles */
-.group-tabs {
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 20px;
-}
-
-.group-tab-panel {
-  padding: 20px 0;
-}
-
-/* **NEW: File Type Icons */
-.file-icon-pdf {
-  color: #d32f2f;
-}
-
-.file-icon-image {
-  color: #1976d2;
-}
-
-.file-icon-video {
-  color: #7b1fa2;
-}
-
-.file-icon-presentation {
-  color: #f57c00;
-}
-
-.file-icon-document {
-  color: #1976d2;
-}
-
-.file-icon-spreadsheet {
-  color: #2e7d32;
-}
-
-.file-icon-default {
-  color: #666;
-}
-
-/* **NEW: Notification Styles */
-.send-notification-btn {
-  background: linear-gradient(45deg, #2196f3, #21cbf3);
-  transition: all 0.3s ease;
-}
-
-.send-notification-btn:hover {
-  background: linear-gradient(45deg, #1976d2, #00acc1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-}
-
-.send-notification-btn:disabled {
-  background: #ccc;
-  transform: none;
-  box-shadow: none;
-}
-
-/* **NEW: Notification Form Styles */
-.notification-form-container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.notification-group-info {
-  background-color: #f8f9fa;
-  border-left: 4px solid #1976d2;
-  padding: 16px;
-  margin-bottom: 20px;
-  border-radius: 4px;
-}
-
-.notification-form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-/* **NEW: Admin Dashboard Notification Button */
-.admin-notify-btn {
-  background-color: #e3f2fd;
-  color: #1976d2;
-  border: 1px solid #1976d2;
-  transition: all 0.3s ease;
-}
-
-.admin-notify-btn:hover {
-  background-color: #1976d2;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
-}
-
-/* **NEW: Responsive Design */
-@media (max-width: 768px) {
-  .file-list-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .file-list-actions {
-    margin-top: 10px;
-    width: 100%;
-    justify-content: flex-end;
-  }
-  
-  .file-meta-info {
-    flex-wrap: wrap;
-  }
-  
-  .notification-form-actions {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .notification-form-actions button {
-    width: 100%;
-  }
-}
-
-/* **NEW: Upload Progress Animation */
-.upload-progress {
-  position: relative;
-  overflow: hidden;
-}
-
-.upload-progress::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-/* **NEW: File Upload Success Animation */
-.file-upload-success {
-  animation: successPulse 0.6s ease-in-out;
-}
-
-@keyframes successPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-/* **NEW: Send Notification Button Animation */
-.send-notification-btn {
-  position: relative;
-  overflow: hidden;
-}
-
-.send-notification-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s;
-}
-
-.send-notification-btn:hover::before {
-  left: 100%;
-}
-
-/* **NEW: Delete Confirmation Dialog */
-.delete-dialog {
-  text-align: center;
-}
-
-.delete-dialog .MuiDialogTitle-root {
-  color: #d32f2f;
-}
-
-/* **NEW: Empty State Styles */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #666;
-}
-
-.empty-state-icon {
-  font-size: 48px;
-  color: #ccc;
-  margin-bottom: 10px;
-}
-
-/* **NEW: Notification Success Animation */
-.notification-success {
-  animation: slideInFromTop 0.5s ease-out;
-}
-
+/* Modern Navbar Animations */
 @keyframes slideInFromTop {
   0% {
     transform: translateY(-100%);
@@ -316,4 +11,288 @@ h1{
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Navbar Glass Effect */
+.navbar-glass {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Modern Button Hover Effects */
+.modern-nav-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-nav-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.modern-nav-button:hover::before {
+  left: 100%;
+}
+
+/* Avatar Bounce Animation */
+.modern-avatar {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.modern-avatar:hover {
+  animation: pulse 0.6s ease-in-out;
+}
+
+/* Notification Badge Pulse */
+.notification-badge {
+  animation: pulse 2s infinite;
+}
+
+/* Menu Dropdown Animation */
+.modern-menu {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Logo Hover Effect */
+.modern-logo {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-logo:hover {
+  transform: scale(1.05) rotate(5deg);
+  filter: brightness(1.2);
+}
+
+/* Gradient Text Animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Mobile Responsive Navbar */
+@media (max-width: 768px) {
+  .navbar-mobile {
+    padding: 0 8px;
+  }
+  
+  .navbar-mobile .MuiToolbar-root {
+    min-height: 64px !important;
+  }
+  
+  .navbar-mobile .MuiButton-root {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+  }
+  
+  .navbar-mobile .MuiButton-startIcon {
+    margin-right: 4px;
+  }
+  
+  .navbar-mobile .modern-logo {
+    font-size: 1.25rem;
+  }
+  
+  .navbar-mobile .MuiAvatar-root {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .navbar-tablet .MuiButton-root {
+    padding: 6px 14px;
+  }
+  
+  .navbar-tablet .modern-logo {
+    font-size: 1.5rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .navbar-dark {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+  }
+  
+  .navbar-dark .MuiButton-root {
+    color: #ffffff;
+  }
+  
+  .navbar-dark .MuiAvatar-root {
+    background: linear-gradient(45deg, #667eea, #764ba2) !important;
+  }
+}
+
+/* Loading State */
+.navbar-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.navbar-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: loading 1.5s infinite;
+}
+
+/* Accessibility Improvements */
+.navbar-accessible .MuiButton-root:focus,
+.navbar-accessible .MuiIconButton-root:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .navbar-high-contrast {
+    background: #000000 !important;
+    border-bottom: 2px solid #ffffff !important;
+  }
+  
+  .navbar-high-contrast .MuiButton-root {
+    color: #ffffff !important;
+    border: 1px solid #ffffff !important;
+  }
+  
+  .navbar-high-contrast .MuiAvatar-root {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .navbar-reduced-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .navbar-print {
+    display: none !important;
+  }
+}
+
+/* Sticky Navbar Effect */
+.navbar-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  transition: all 0.3s ease;
+}
+
+.navbar-sticky.scrolled {
+  background: rgba(102, 126, 234, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Menu Item Hover Effects */
+.modern-menu-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+  transition: left 0.3s;
+}
+
+.modern-menu-item:hover::before {
+  left: 100%;
+}
+
+/* Notification Dot Animation */
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ff4444;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Logo Icon Rotation */
+.logo-icon {
+  transition: transform 0.3s ease;
+}
+
+.logo-icon:hover {
+  transform: rotate(360deg);
+}
+
+/* Smooth Scrolling for Navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus Ring for Better Accessibility */
+.navbar-accessible *:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
