@@ -13,16 +13,22 @@ const UserModel = require('./models/UserModel');
 const GroupModel = require('./models/GroupModel');
 const MessageModel = require('./models/MessageModel');
 
+// **NEW: Import file routes**
+const fileRoutes = require('./routes/fileRoutes');
+
 app.use(express.json());
 app.use(cors());
 
-// **NEW: Static file serving for uploaded materials**
+// **Static file serving for uploaded materials**
 app.use('/uploads', express.static('uploads'));
 
-// **NEW: Multer configuration for file uploads**
+// **NEW: Use file routes**
+app.use('/api', fileRoutes);
+
+// **Multer configuration for message files (existing)**
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
+        const uploadDir = 'uploads/messages/';
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -49,7 +55,7 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// **NEW: Middleware to verify group ownership**
+// **Middleware to verify group ownership**
 const verifyGroupOwnership = async (req, res, next) => {
     try {
         const group = await GroupModel.findById(req.params.id);
@@ -171,7 +177,7 @@ app.post('/groups/create', verifyToken, async(req, res) => {
     }
 });
 
-// **NEW: Update group (only by creator)**
+// **Update group (only by creator)**
 app.put('/groups/:id', verifyToken, verifyGroupOwnership, async(req, res) => {
     try {
         const { title, subject, description } = req.body;
@@ -188,9 +194,21 @@ app.put('/groups/:id', verifyToken, verifyGroupOwnership, async(req, res) => {
     }
 });
 
-// **NEW: Delete group (only by creator)**
+// **Delete group (only by creator) - UPDATED to handle files**
 app.delete('/groups/:id', verifyToken, verifyGroupOwnership, async(req, res) => {
     try {
+        const group = await GroupModel.findById(req.params.id);
+        
+        // **NEW: Delete all group files from filesystem**
+        if (group.files && group.files.length > 0) {
+            group.files.forEach(file => {
+                const filePath = path.join(__dirname, 'uploads/groups', file.fileName);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            });
+        }
+        
         // Remove group from all members' joinedGroups
         await UserModel.updateMany(
             { joinedGroups: req.params.id },
@@ -243,7 +261,8 @@ app.get('/groups/:id', async(req, res) => {
     try {
         const group = await GroupModel.findById(req.params.id)
             .populate('creator', 'name')
-            .populate('members', 'name');
+            .populate('members', 'name')
+            .populate('files.uploadedBy', 'name'); // **NEW: Populate file uploader info**
         res.json(group);
     } catch(error) {
         res.status(500).json({ error });
@@ -269,7 +288,7 @@ app.post('/groups/:id/messages', verifyToken, upload.single('file'), async(req, 
             groupId: req.params.id,
             sender: req.user.userId,
             message: req.body.message,
-            fileUrl: req.file ? `/uploads/${req.file.filename}` : null
+            fileUrl: req.file ? `/uploads/messages/${req.file.filename}` : null
         });
         await message.save();
         res.json({ message: 'Message sent successfully' });
