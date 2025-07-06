@@ -4,3 +4,216 @@ h1{
   text-align: center;
   padding: 40px;
 }
+
+/* **NEW: File Upload Component Styles */
+.file-upload-container {
+  margin-bottom: 20px;
+}
+
+.file-upload-dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.file-upload-dropzone:hover {
+  border-color: #1976d2;
+  background-color: #f5f5f5;
+}
+
+.file-upload-dropzone.drag-active {
+  border-color: #1976d2;
+  background-color: #e3f2fd;
+}
+
+.file-upload-progress {
+  margin-top: 10px;
+}
+
+.file-upload-message {
+  margin-top: 10px;
+}
+
+/* **NEW: File List Component Styles */
+.file-list-container {
+  margin-bottom: 20px;
+}
+
+.file-list-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.file-list-item:last-child {
+  border-bottom: none;
+}
+
+.file-list-icon {
+  margin-right: 10px;
+  color: #666;
+}
+
+.file-list-info {
+  flex: 1;
+}
+
+.file-list-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.file-list-details {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 4px;
+}
+
+.file-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.file-list-actions button {
+  min-width: 36px;
+  height: 36px;
+  padding: 6px;
+}
+
+.file-size-chip {
+  background-color: #f0f0f0;
+  color: #666;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  margin-right: 8px;
+}
+
+.file-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.file-meta-info span {
+  font-size: 0.75em;
+  color: #888;
+}
+
+/* **NEW: Tab Styles */
+.group-tabs {
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.group-tab-panel {
+  padding: 20px 0;
+}
+
+/* **NEW: File Type Icons */
+.file-icon-pdf {
+  color: #d32f2f;
+}
+
+.file-icon-image {
+  color: #1976d2;
+}
+
+.file-icon-video {
+  color: #7b1fa2;
+}
+
+.file-icon-presentation {
+  color: #f57c00;
+}
+
+.file-icon-document {
+  color: #1976d2;
+}
+
+.file-icon-spreadsheet {
+  color: #2e7d32;
+}
+
+.file-icon-default {
+  color: #666;
+}
+
+/* **NEW: Responsive Design */
+@media (max-width: 768px) {
+  .file-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .file-list-actions {
+    margin-top: 10px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .file-meta-info {
+    flex-wrap: wrap;
+  }
+}
+
+/* **NEW: Upload Progress Animation */
+.upload-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* **NEW: File Upload Success Animation */
+.file-upload-success {
+  animation: successPulse 0.6s ease-in-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* **NEW: Delete Confirmation Dialog */
+.delete-dialog {
+  text-align: center;
+}
+
+.delete-dialog .MuiDialogTitle-root {
+  color: #d32f2f;
+}
+
+/* **NEW: Empty State Styles */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  color: #ccc;
+  margin-bottom: 10px;
+}

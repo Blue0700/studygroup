@@ -16,7 +16,15 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContentText from '@mui/material/DialogContentText';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import TabPanel from '@mui/lab/TabPanel';
+import TabContext from '@mui/lab/TabContext';
 import axios from 'axios';
+
+// **NEW: Import file components**
+import FileUpload from './FileUpload';
+import FileList from './FileList';
 
 const GroupDetails = () => {
     const { id } = useParams();
@@ -28,6 +36,10 @@ const GroupDetails = () => {
     const [currentUserId, setCurrentUserId] = useState(null);
     const [isUserInGroup, setIsUserInGroup] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    
+    // **NEW: Tab state and file refresh trigger**
+    const [activeTab, setActiveTab] = useState('0');
+    const [fileRefreshTrigger, setFileRefreshTrigger] = useState(0);
 
     useEffect(() => {
         fetchGroupDetails();
@@ -175,6 +187,18 @@ const GroupDetails = () => {
         }
     };
 
+    // **NEW: Handle file upload success**
+    const handleFileUploaded = (uploadedFile) => {
+        setFileRefreshTrigger(prev => prev + 1);
+        // Optionally show success message
+        console.log('File uploaded successfully:', uploadedFile);
+    };
+
+    // **NEW: Handle tab change**
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
+    };
+
     const isUserLoggedIn = () => {
         return localStorage.getItem('token') !== null;
     };
@@ -252,67 +276,99 @@ const GroupDetails = () => {
                 </CardContent>
             </Card>
 
-            {/* Messages Section - Only show if user is in group */}
+            {/* **NEW: Tabbed Content - Only show if user is in group */}
             {isUserInGroup ? (
                 <Card>
                     <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                            Group Messages & Materials
-                        </Typography>
-                        
-                        <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                            {messages.map((message) => (
-                                <div key={message._id}>
-                                    <ListItem>
-                                        <ListItemText
-                                            primary={message.sender?.name}
-                                            secondary={
-                                                <>
-                                                    <Typography variant="body2">
-                                                        {message.message}
-                                                    </Typography>
-                                                    {message.fileUrl && (
-                                                        <Typography variant="caption" color="primary">
-                                                            📎 File attached
-                                                        </Typography>
-                                                    )}
-                                                    <Typography variant="caption" display="block">
-                                                        {new Date(message.createdAt).toLocaleString()}
-                                                    </Typography>
-                                                </>
-                                            }
-                                        />
-                                    </ListItem>
-                                    <Divider />
-                                </div>
-                            ))}
-                        </List>
+                        <TabContext value={activeTab}>
+                            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                                <Tabs value={activeTab} onChange={handleTabChange} aria-label="group tabs">
+                                    <Tab label="Messages" value="0" />
+                                    <Tab label="Study Materials" value="1" />
+                                </Tabs>
+                            </Box>
+                            
+                            {/* Messages Tab */}
+                            <TabPanel value="0" sx={{ p: 0, mt: 2 }}>
+                                <Typography variant="h6" gutterBottom>
+                                    Group Messages
+                                </Typography>
+                                
+                                <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+                                    {messages.map((message) => (
+                                        <div key={message._id}>
+                                            <ListItem>
+                                                <ListItemText
+                                                    primary={message.sender?.name}
+                                                    secondary={
+                                                        <>
+                                                            <Typography variant="body2">
+                                                                {message.message}
+                                                            </Typography>
+                                                            {message.fileUrl && (
+                                                                <Typography variant="caption" color="primary">
+                                                                    📎 File attached
+                                                                </Typography>
+                                                            )}
+                                                            <Typography variant="caption" display="block">
+                                                                {new Date(message.createdAt).toLocaleString()}
+                                                            </Typography>
+                                                        </>
+                                                    }
+                                                />
+                                            </ListItem>
+                                            <Divider />
+                                        </div>
+                                    ))}
+                                </List>
 
-                        <Box sx={{ mt: 3 }}>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={3}
-                                label="Send a message..."
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                sx={{ mb: 2 }}
-                            />
+                                <Box sx={{ mt: 3 }}>
+                                    <TextField
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        label="Send a message..."
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        sx={{ mb: 2 }}
+                                    />
+                                    
+                                    <input
+                                        type="file"
+                                        onChange={(e) => setFile(e.target.files[0])}
+                                        style={{ marginBottom: '10px' }}
+                                    />
+                                    
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={sendMessage}
+                                        disabled={!newMessage.trim()}
+                                    >
+                                        Send Message
+                                    </Button>
+                                </Box>
+                            </TabPanel>
                             
-                            <input
-                                type="file"
-                                onChange={(e) => setFile(e.target.files[0])}
-                                style={{ marginBottom: '10px' }}
-                            />
-                            
-                            <Button 
-                                variant="contained" 
-                                onClick={sendMessage}
-                                disabled={!newMessage.trim()}
-                            >
-                                Send Message
-                            </Button>
-                        </Box>
+                            {/* **NEW: Study Materials Tab */}
+                            <TabPanel value="1" sx={{ p: 0, mt: 2 }}>
+                                <Typography variant="h6" gutterBottom>
+                                    Study Materials
+                                </Typography>
+                                
+                                {/* File Upload Component */}
+                                <FileUpload 
+                                    groupId={id} 
+                                    onFileUploaded={handleFileUploaded}
+                                />
+                                
+                                {/* File List Component */}
+                                <FileList 
+                                    groupId={id} 
+                                    groupCreator={group.creator?._id}
+                                    refreshTrigger={fileRefreshTrigger}
+                                />
+                            </TabPanel>
+                        </TabContext>
                     </CardContent>
                 </Card>
             ) : (
